@@ -1,0 +1,5 @@
+spring:
+  cloud:
+    config:
+      url: http://127.0.0.1:8888 # 이거 어떻게 설정할건지 생각
+      name: chatting-service
