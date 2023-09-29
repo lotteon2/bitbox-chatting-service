@@ -4,6 +4,10 @@ spring:
       url: http://127.0.0.1:8888
       name: chatting-service
   kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
     consumer:
       bootstrap-servers: localhost:9092
       group-id: group-id-oing
