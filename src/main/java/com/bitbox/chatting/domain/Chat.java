@@ -1,5 +1,6 @@
 package com.bitbox.chatting.domain;
 
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -21,7 +22,7 @@ public class Chat {
     @Column(name = "transmitter_id", nullable = false)
     private String transmitterId;
 
-    @Column(name = "created_at", nullable = false, columnDefinition = "timestamp default current_timestamp")
+    @Column(name = "created_at", nullable = false, columnDefinition = "timestamp(6) default current_timestamp(6)")
     private LocalDateTime createdAt;
 
     @Column(name = "is_paid", nullable = false, columnDefinition = "boolean default false")
