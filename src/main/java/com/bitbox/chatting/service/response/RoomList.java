@@ -1,5 +1,6 @@
 package com.bitbox.chatting.service.response;
 
+import com.bitbox.chatting.repository.response.RoomMessage;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Builder;
 
@@ -17,5 +18,14 @@ public class RoomList {
 
     public void setSecret(boolean secret) {
         isSecret = secret;
+    }
+
+    public static RoomList convertRoomMessageToRoomList(RoomMessage roomMessage){
+        return RoomList.builder()
+                .chatRoomId(roomMessage.getChatRoomId())
+                .otherPerson(roomMessage.getOtherUserName())
+                .latestMessage(roomMessage.getLatestMessage())
+                .isSecret(false)
+                .build();
     }
 }

@@ -40,12 +40,7 @@ public class ChattingService {
         boolean hasSubscription = getSubscription(roomListResponseList);
 
         for(RoomMessage roomMessage : chatRepository.getRoomListWithLatestMessage(memberId)){
-            RoomList roomList = RoomList.builder()
-                    .chatRoomId(roomMessage.getChatRoomId())
-                    .otherPerson(roomMessage.getOtherUserName())
-                    .latestMessage(roomMessage.getLatestMessage())
-                    .isSecret(false)
-                    .build();
+            RoomList roomList = RoomList.convertRoomMessageToRoomList(roomMessage);
             if(isSecret(roomMessage, memberId, hasSubscription)) {
                 roomList.setLatestMessage("");
                 roomList.setSecret(true);
