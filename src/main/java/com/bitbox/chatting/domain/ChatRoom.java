@@ -1,11 +1,20 @@
 package com.bitbox.chatting.domain;
 
 
+import com.bitbox.chatting.dto.ChattingRoomDto;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
 import java.util.List;
 
 @Entity
 @Table(name="chat_room", uniqueConstraints = {@UniqueConstraint(columnNames = {"host_id", "guest_id"})})
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ChatRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,4 +35,17 @@ public class ChatRoom {
 
     @Column(name="guest_name", nullable = false)
     private String guestName;
+
+    public Long getChatRoomId() {
+        return chatRoomId;
+    }
+
+    public static ChatRoom convertChattingRoomDtoToChatRoom(ChattingRoomDto chattingRoomDto){
+        return ChatRoom.builder()
+                .hostId(chattingRoomDto.getHostId())
+                .hostName(chattingRoomDto.getHostName())
+                .guestId(chattingRoomDto.getGuestId())
+                .guestName(chattingRoomDto.getGuestName())
+                .build();
+    }
 }

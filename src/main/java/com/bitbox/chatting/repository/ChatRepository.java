@@ -14,7 +14,7 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
 
     @Query(value = "WITH LatestMessages AS ( " +
             "    SELECT " +
-            "        c.chat_room_id, " +
+            "        cr.chat_room_id, " +
             "        c.chat_content AS latest_message, " +
             "        c.is_paid AS latest_message_is_paid, " +
             "        c.transmitter_id AS latest_message_sender, " +
@@ -22,11 +22,10 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             "        cr.host_id AS host_id, " +
             "        cr.guest_name AS guest_name, " +
             "        cr.host_name AS host_name, " +
-            "        ROW_NUMBER() OVER(PARTITION BY c.chat_room_id ORDER BY c.created_at DESC) AS rn " +
+            "        ROW_NUMBER() OVER(PARTITION BY cr.chat_room_id ORDER BY c.created_at DESC) AS rn " +
             "    FROM chat c " +
-            "    JOIN chat_room cr ON c.chat_room_id = cr.chat_room_id " +
+            "    RIGHT JOIN chat_room cr ON c.chat_room_id = cr.chat_room_id " +
             "    WHERE (cr.guest_id = :memberId OR cr.host_id = :memberId) " +
-            "        AND c.transmitter_id IS NOT NULL " +
             ") " +
             "SELECT " +
             "    chat_room_id AS chatRoomId, " +
@@ -42,6 +41,6 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             "        WHEN host_id = :memberId THEN guest_name " +
             "    END AS otherUserName " +
             "FROM LatestMessages " +
-            "WHERE rn = 1", nativeQuery = true)
+            "WHERE rn = 1 ORDER BY CHAT_ROOM_ID", nativeQuery = true)
     List<RoomMessage> getRoomListWithLatestMessage(@Param("memberId") String memberId);
 }

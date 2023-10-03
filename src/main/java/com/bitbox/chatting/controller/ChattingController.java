@@ -1,15 +1,13 @@
 package com.bitbox.chatting.controller;
 
+import com.bitbox.chatting.domain.ChatRoom;
+import com.bitbox.chatting.dto.ChattingRoomDto;
 import com.bitbox.chatting.service.ChattingService;
 import com.bitbox.chatting.service.response.ConnectionResponse;
 import com.bitbox.chatting.service.response.RoomListResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RequestMapping("/")
 @RestController
@@ -17,25 +15,25 @@ import java.util.List;
 public class ChattingController {
     private final ChattingService chattingService;
     private String headerMemberId = "csh"; // TODO HEADER값으로 변경 필요
+    private String headerMemberName = "최성훈";
 
     @GetMapping("connection/list")
     public ResponseEntity<ConnectionResponse> connectionList(){
         return ResponseEntity.ok(chattingService.getConnectionListWithUnreadMessage(headerMemberId));
     }
 
-    @GetMapping("chatting/list")
+    @GetMapping("chatting-room")
     public ResponseEntity<RoomListResponse> chattingRoomList(){
         return ResponseEntity.ok(chattingService.getChattingRoomList(headerMemberId));
     }
 
-    // 구독권 정보를 가지고온다
-    // chat_room 테이블에서 해당 유저가 host_id에 있거나 guest_id에 있는 경우를 가지고옴
+    @PostMapping("chatting-room")
+    public ResponseEntity<ChatRoom> chatRoomCreation(@RequestBody ChattingRoomDto chattingRoomDto){
+        chattingRoomDto.setHostId(headerMemberId);
+        chattingRoomDto.setHostName(headerMemberName);
+        return ResponseEntity.ok(chattingService.createChatRoom(chattingRoomDto));
+    }
 
-    // 내가 GUEST_ID면 HOST_ID를 출력, 내가 HOST_ID면 GUEST_ID를 출력
-    // 그리고 내가 GUEST_ID면 1, HOST_ID면 0
-    // 그리고 chat에서 CRATED_AT이 가장 최신인 메시지를 가지고옴(chat_room_id)
-    // 그리고 해당 메시지의 결제여부 및 TANSMITTER_ID 출력
-    // 쿼리를 2번날려야함
 }
 
 /*
@@ -48,10 +46,18 @@ public class ChattingController {
     그리고 해당 채팅방의 IS_READ(TRANSMITTER_ID가 본인이 아닌)를 true로 설정한다
     -> /chatting/rooms/{roomId}
 
-    서킷브레이커 하면 뭔가 값은 떨궈주는데 코드를 다르게 해가지고 뭔가 메시지를 떨궈야 할 것 같은데
-    예를들면 내가 구독권이 있는지 없는지 모르지만 구독권 모듈을 호출을 못했으면
-    "구독권"관련 서버에서 문제가 발생하여 구독권 정보가 존재해도 확인할 수 없습니다? 이런식?
+    특정 유저가 구독을 하고 있고 메시지 발생시 카프카에 저장 후 이게 해당 방을 구독하는 애들에게 메시지를 쏜다
+    근데 받아줄 때 해당 창이 열려있고(변수 제어 가능) 내가보고 있는거랑 그게 일치하면 메시지를 그리고
+    아니면 안읽은 메시지 개수를 더하는 개념?
 
-    채팅방 만들기
-    -> 채팅방을 만들 수 있다.
+    채팅방 생성하면 반대쪽도 뭔가 받아줘야하니 폴링의 개념?
+
+    /1
+    /2 -> 보고있어 -> 알림옴 -> 메시지 그림 -> 읽음처리
+    /3 -> 알림옴 -> 안읽은메시지1
+    /4
+    /5
+    /6
+    /7
+    /8
  */

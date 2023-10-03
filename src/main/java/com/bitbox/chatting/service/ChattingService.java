@@ -1,14 +1,19 @@
 package com.bitbox.chatting.service;
 
+import com.bitbox.chatting.domain.ChatRoom;
+import com.bitbox.chatting.dto.ChattingRoomDto;
 import com.bitbox.chatting.dto.SubscriptionResponse;
+import com.bitbox.chatting.exception.BadRequestException;
+import com.bitbox.chatting.exception.DuplicationRoomException;
 import com.bitbox.chatting.feign.PaymentServiceClient;
 import com.bitbox.chatting.repository.ChatRepository;
 import com.bitbox.chatting.repository.ChatRoomRepository;
+import com.bitbox.chatting.repository.response.RoomMessage;
 import com.bitbox.chatting.service.response.ConnectionResponse;
 import com.bitbox.chatting.service.response.RoomList;
 import com.bitbox.chatting.service.response.RoomListResponse;
-import com.bitbox.chatting.repository.response.RoomMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.stereotype.Service;
@@ -17,6 +22,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChattingService {
     private final ChatRepository chatRepository;
     private final ChatRoomRepository chatRoomRepository;
@@ -51,6 +57,15 @@ public class ChattingService {
         return roomListResponseList;
     }
 
+    public ChatRoom createChatRoom(ChattingRoomDto chattingRoomDto){
+        if(chattingRoomDto.getGuestId().equals(chattingRoomDto.getHostId())){
+            log.error("header 조작 가능성 있음");
+            throw new BadRequestException("잘못된 요청입니다.");
+        }
+        chatRoomRepository.findByGuestIdAndHostId(chattingRoomDto.getGuestId(), chattingRoomDto.getHostId()).ifPresent(chatRoom ->{ throw new DuplicationRoomException("이미 방이 존재합니다");});
+        return chatRoomRepository.save(ChatRoom.convertChattingRoomDtoToChatRoom(chattingRoomDto));
+    }
+
     private boolean getSubscription(RoomListResponse roomListResponse) {
         CircuitBreaker circuitbreaker = circuitBreakerFactory.create("circuitbreaker");
         SubscriptionResponse subscriptionResponse = circuitbreaker.run(paymentServiceClient::getSubscription, throwable -> null);
@@ -67,8 +82,7 @@ public class ChattingService {
         // 결제여부가 있는 케이스
         // 보낸사람과 memberId가 일치하는 케이스
         // 내가 Host인 케이스
-
-        if(hasSubscription || roomMessage.getLatestMessageIsPaid() || roomMessage.getLatestMessageSender().equals(memberId) || roomMessage.getRole().equals(guest)){
+        if(roomMessage.getLatestMessageIsPaid() == null || hasSubscription || roomMessage.getLatestMessageIsPaid() || roomMessage.getLatestMessageSender().equals(memberId) || roomMessage.getRole().equals(guest)){
             return false;
         }
 
