@@ -2,16 +2,19 @@ package com.bitbox.chatting.repository;
 
 import com.bitbox.chatting.domain.Chat;
 import com.bitbox.chatting.repository.response.RoomMessage;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ChatRepository extends CrudRepository<Chat, Long> {
     @Query("SELECT SUM(CASE WHEN c.isRead = false THEN 1 ELSE 0 END) FROM Chat c WHERE c.chatRoom.chatRoomId  IN :chatRoomIds AND c.isRead = false AND c.transmitterId != :memberId")
     Long getUnreadMessageCountForRooms(@Param("chatRoomIds") List<Long> chatRoomIds, @Param("memberId") String memberId);
 
+    // [TODO] NATIVE QUERY이므로 주의
     @Query(value = "WITH LatestMessages AS ( " +
             "    SELECT " +
             "        cr.chat_room_id, " +
@@ -43,4 +46,22 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             "FROM LatestMessages " +
             "WHERE rn = 1 ORDER BY CHAT_ROOM_ID", nativeQuery = true)
     List<RoomMessage> getRoomListWithLatestMessage(@Param("memberId") String memberId);
+
+    // [TODO] NATIVE QUERY이므로 주의
+    @Modifying
+    @Query(value = "UPDATE chat " +
+            "SET is_paid = true " +
+            "WHERE chat_id IN ( " +
+            "    SELECT chat_id " +
+            "    FROM ( " +
+            "        SELECT chat.chat_id " +
+            "        FROM chat " +
+            "        JOIN chat_room ON chat.chat_room_id = chat_room.chat_room_id " +
+            "        WHERE chat_room.host_id = :hostId " +
+            "        AND chat.created_at <= :createdAt " +
+            "        AND chat.transmitter_id != :hostId " +
+            "    ) AS tmp " +
+            ")", nativeQuery = true)
+    void updateChatIsPaidByHostAndCreatedAt(@Param("hostId") String hostId,
+                                            @Param("createdAt") LocalDateTime createdAt);
 }

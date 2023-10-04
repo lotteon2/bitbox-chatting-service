@@ -4,8 +4,8 @@ import com.bitbox.chatting.dto.SubscriptionResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 
-@FeignClient(name = "payment-service")
+@FeignClient(name = "apigateway-service")
 public interface PaymentServiceClient {
-    @GetMapping("/subscription")
+    @GetMapping("/payment-service/subscription")
     SubscriptionResponse getSubscription();
 }
