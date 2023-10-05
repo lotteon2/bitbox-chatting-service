@@ -4,7 +4,6 @@ package com.bitbox.chatting.domain;
 import com.bitbox.chatting.dto.ChattingRoomDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
