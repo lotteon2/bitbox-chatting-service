@@ -21,9 +21,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -112,6 +110,11 @@ public class ChattingService {
         }
 
         return chatResponseList;
+    }
+
+    @Transactional
+    public void updateIsReadByChatId(Long chatId){
+        chatRepository.updateIsReadByChatId(chatId);
     }
 
     private boolean isSecret(RoomMessage roomMessage, String memberId, boolean hasSubscription){ // 메시지를 숨겨야하는가 여부 판단

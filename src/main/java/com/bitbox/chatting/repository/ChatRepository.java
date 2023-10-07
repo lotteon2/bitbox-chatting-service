@@ -90,4 +90,8 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             @Param("memberId") String memberId,
             @Param("secretFlag") boolean secretFlag
     );
+
+    @Modifying
+    @Query("UPDATE Chat c SET c.isRead = true WHERE c.chatId = :chatId")
+    void updateIsReadByChatId(@Param("chatId") Long chatId);
 }

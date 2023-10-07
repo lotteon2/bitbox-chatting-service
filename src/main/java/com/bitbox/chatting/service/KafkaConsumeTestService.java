@@ -66,6 +66,7 @@ public class KafkaConsumeTestService {
     (단! 구독권 모듈에 구독권 정보를 조회 후 존재하면 메시지를 숨기지 않는다 -> 서킷 브레이커)
     그리고 해당 채팅방의 IS_READ(TRANSMITTER_ID가 본인이 아닌)를 true로 설정한다
     -> /chatting/rooms/{roomId}
+    [완료]
 
     알림 로직 -> 카프카가 특정 방에 대해서 내용을 알림을 쏘면 받아주는 쪽에서 대화 창이 열려있으면
     (참고로 DB에 해당 채팅을 저장도 해야함.)

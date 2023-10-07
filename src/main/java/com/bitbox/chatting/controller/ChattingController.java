@@ -40,16 +40,16 @@ public class ChattingController {
         return ResponseEntity.ok(chattingService.getChattingRoomList(getSubscription(), headerMemberId));
     }
 
-    @PostMapping("chatting-room")
-    public ResponseEntity<ChatRoom> chatRoomCreation(@RequestBody ChattingRoomDto chattingRoomDto){
-        chattingRoomDto.setHostId(headerMemberId);
-        chattingRoomDto.setHostName(headerMemberName);
-        return ResponseEntity.ok(chattingService.createChatRoom(chattingRoomDto));
-    }
-
     @GetMapping("/chatting-room/{roomId}")
     public List<ChatResponse> chatting(@PathVariable long roomId){
         return chattingService.getChatting(headerMemberId, getSubscription(), roomId);
+    }
+
+    @PostMapping("chatting-room")
+    public ResponseEntity<ChatRoom> createChatRoom(@RequestBody ChattingRoomDto chattingRoomDto){
+        chattingRoomDto.setHostId(headerMemberId);
+        chattingRoomDto.setHostName(headerMemberName);
+        return ResponseEntity.ok(chattingService.createChatRoom(chattingRoomDto));
     }
 
     @PostMapping("message/{messageId}")
@@ -58,6 +58,12 @@ public class ChattingController {
             throw new PaymentFailException("결제 실패 했습니다.");
         }
         return ResponseEntity.ok(chattingService.payMessage(headerMemberId, messageId));
+    }
+
+    @PatchMapping("/chatting-room/{chatRoomId}/messages/{messageId}/mark-as-read")
+    public ResponseEntity<Void> updateIsRead(@PathVariable long messageId){
+        chattingService.updateIsReadByChatId(messageId);
+        return ResponseEntity.ok().build();
     }
 
     private SubscriptionServerInfoDto getSubscription() {
