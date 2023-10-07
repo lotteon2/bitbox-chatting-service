@@ -2,20 +2,33 @@ package com.bitbox.chatting.controller;
 
 import com.bitbox.chatting.domain.ChatRoom;
 import com.bitbox.chatting.dto.ChattingRoomDto;
+import com.bitbox.chatting.dto.SubscriptionResponseDto;
+import com.bitbox.chatting.dto.SubscriptionServerInfoDto;
+import com.bitbox.chatting.exception.PaymentFailException;
+import com.bitbox.chatting.feign.FeignServiceClient;
 import com.bitbox.chatting.service.ChattingService;
+import com.bitbox.chatting.service.response.ChatResponse;
 import com.bitbox.chatting.service.response.ConnectionResponse;
 import com.bitbox.chatting.service.response.RoomListResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequestMapping("/")
 @RestController
 @RequiredArgsConstructor
 public class ChattingController {
     private final ChattingService chattingService;
+    private final FeignServiceClient feignServiceClient;
+    private final CircuitBreakerFactory circuitBreakerFactory;
     private String headerMemberId = "csh"; // TODO HEADER값으로 변경 필요
     private String headerMemberName = "최성훈";
+    private final int defultMinusCredit = 1;
 
     @GetMapping("connection/list")
     public ResponseEntity<ConnectionResponse> connectionList(){
@@ -24,7 +37,7 @@ public class ChattingController {
 
     @GetMapping("chatting-room")
     public ResponseEntity<RoomListResponse> chattingRoomList(){
-        return ResponseEntity.ok(chattingService.getChattingRoomList(headerMemberId));
+        return ResponseEntity.ok(chattingService.getChattingRoomList(getSubscription(), headerMemberId));
     }
 
     @PostMapping("chatting-room")
@@ -34,6 +47,32 @@ public class ChattingController {
         return ResponseEntity.ok(chattingService.createChatRoom(chattingRoomDto));
     }
 
+    @GetMapping("/chatting-room/{roomId}")
+    public List<ChatResponse> chatting(@PathVariable long roomId){
+        return chattingService.getChatting(headerMemberId, getSubscription(), roomId);
+    }
+
+    @PostMapping("message/{messageId}")
+    public ResponseEntity<String> payMessage(@PathVariable long messageId){
+        if(!feignServiceClient.updateMemberCredit(-defultMinusCredit).getStatusCode().equals(HttpStatus.OK)){
+            throw new PaymentFailException("결제 실패 했습니다.");
+        }
+        return ResponseEntity.ok(chattingService.payMessage(headerMemberId, messageId));
+    }
+
+    private SubscriptionServerInfoDto getSubscription() {
+        CircuitBreaker circuitbreaker = circuitBreakerFactory.create("circuitbreaker");
+        SubscriptionResponseDto subscriptionResponseDto = circuitbreaker.run(feignServiceClient::getSubscription, throwable -> null);
+        SubscriptionServerInfoDto subscriptionServerInfoDto = new SubscriptionServerInfoDto();
+
+        if (subscriptionResponseDto == null) { // 구독권 서버를 확인할 수 없는 경우
+            subscriptionServerInfoDto.setMessage("구독권 정보를 확인할 수 없습니다.");
+        }
+
+        subscriptionServerInfoDto.setHasSubscription(subscriptionResponseDto != null && subscriptionResponseDto.isValid());
+
+        return subscriptionServerInfoDto;
+    }
 }
 
 /*

@@ -6,7 +6,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class SubscriptionResponse {
+public class SubscriptionResponseDto {
     private boolean isValid;
     private SubscriptionType subscriptionType;
     private LocalDateTime startDate;

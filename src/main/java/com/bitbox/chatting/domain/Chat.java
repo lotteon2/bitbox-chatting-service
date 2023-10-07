@@ -1,11 +1,14 @@
 package com.bitbox.chatting.domain;
 
 
+import lombok.Getter;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name="chat")
+@Getter
 public class Chat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
