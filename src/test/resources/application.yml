@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    driverClassName: org.h2.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 500
+# 아래부터는 mock임
+  kafka:
+    consumer:
+      group-id: csh
+expirationTopicName: csh
+chatTopicName: csh
+chatCreationTopicName: csh
+userCreditModifyTopicName: csh
