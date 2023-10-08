@@ -6,5 +6,6 @@ public interface RoomMessage {
     Boolean getLatestMessageIsPaid(); // 해당 메시지의 결제여부
     String getLatestMessageSender(); // 해당 메시지를 보낸사람
     String getRole(); // 해당 채팅방의 Guest여부
-    String getOtherUserName(); // 상대방
+    String getOtherUserId(); // 상대방 아이디
+    String getOtherUserName(); // 상대방 이름
 }

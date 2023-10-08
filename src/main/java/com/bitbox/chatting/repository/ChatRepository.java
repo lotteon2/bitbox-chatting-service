@@ -2,6 +2,7 @@ package com.bitbox.chatting.repository;
 
 import com.bitbox.chatting.domain.Chat;
 import com.bitbox.chatting.repository.response.RoomMessage;
+import com.bitbox.chatting.service.response.ChatResponse;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -40,6 +41,10 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             "        WHEN host_id = :memberId THEN 'host' " +
             "    END AS role, " +
             "    CASE " +
+            "        WHEN guest_id = :memberId THEN host_id " +
+            "        WHEN host_id = :memberId THEN guest_id " +
+            "    END AS otherUserId, " +
+            "    CASE " +
             "        WHEN guest_id = :memberId THEN host_name " +
             "        WHEN host_id = :memberId THEN guest_name " +
             "    END AS otherUserName " +
@@ -64,4 +69,33 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             ")", nativeQuery = true)
     void updateChatIsPaidByHostAndCreatedAt(@Param("hostId") String hostId,
                                             @Param("createdAt") LocalDateTime createdAt);
+
+    @Modifying
+    @Query("UPDATE Chat c SET c.isPaid = true WHERE c.chatId = :chatId")
+    int updateIsPaid(long chatId);
+
+    @Modifying
+    @Query("UPDATE Chat c SET c.isRead = true WHERE c.chatRoom.chatRoomId = :chatRoomId AND c.transmitterId <> :memberId")
+    void updateMessageReadFlagByRoomIdAndMemberId(@Param("chatRoomId") Long chatRoomId,
+                                                  @Param("memberId") String memberId);
+
+    @Query("SELECT new com.bitbox.chatting.service.response.ChatResponse(" +
+            "CASE WHEN c.transmitterId = :memberId THEN 'R' ELSE 'L' END, " +
+            "CASE WHEN c.isPaid = true OR c.transmitterId = :memberId OR :secretFlag = false " +
+            "THEN c.chatContent ELSE '' END, " +
+            "CASE WHEN c.isPaid = true OR c.transmitterId = :memberId OR :secretFlag = false " +
+            "THEN false ELSE true END,"+
+            "c.chatId) " +
+            "FROM Chat c " +
+            "WHERE c.chatRoom.chatRoomId = :chatRoomId " +
+            "ORDER BY c.createdAt")
+    List<ChatResponse> findChatResponsesByChatRoomId(
+            @Param("chatRoomId") Long chatRoomId,
+            @Param("memberId") String memberId,
+            @Param("secretFlag") boolean secretFlag
+    );
+
+    @Modifying
+    @Query("UPDATE Chat c SET c.isRead = true WHERE c.chatId = :chatId AND c.transmitterId <> :memberId")
+    void updateIsReadByChatId(@Param("chatId") Long chatId, @Param("memberId") String memberId);
 }

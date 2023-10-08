@@ -1,12 +1,9 @@
 package com.bitbox.chatting.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bitbox.bitbox.dto.MemberPaymentDto;
-import io.github.bitbox.bitbox.util.KafkaProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -15,25 +12,17 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class KafkaConsumeTestService {
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, MemberPaymentDto> kafkaTemplate;
 
-    //@KafkaListener(topics = "memberCredit")
-    public void kafkaTopicTest(String kafkaMessage) {
-        ObjectMapper mapper = new ObjectMapper();
-        MemberPaymentDto memberPaymentDto;
-        try {
-            memberPaymentDto = mapper.readValue(kafkaMessage, new TypeReference<>() {});
-        } catch (JsonProcessingException ex) {
-            throw new RuntimeException(ex);
-        }
-
+    @KafkaListener(topics = "kakaoMemberCredit")
+    public void kafkaTopicTest(MemberPaymentDto memberPaymentDto) {
         log.info("memberId = {}",memberPaymentDto.getMemberId());
         log.info("credit = {}",memberPaymentDto.getMemberCredit());
         log.info("tid = {}",memberPaymentDto.getTid());
         log.info("cancelAmount = {}",memberPaymentDto.getCancelAmount());
         log.info("cancelTaxFreeAmount = {}",memberPaymentDto.getCancelTaxFreeAmount());
 
-        KafkaProducer.send(kafkaTemplate, "kakaopayCancel", memberPaymentDto);
+        kafkaTemplate.send("kakaopayCancel", memberPaymentDto);
     }
 }
 
@@ -67,6 +56,7 @@ public class KafkaConsumeTestService {
     -> 만약 요청을 하다가 터지면 카프카에 똑같이 요청을 보내는데 여기서는 더할 크레딧 보낸다
     feign client인데 서킷 브레이커 아님 해당 로직이 성공하면 특정 메시지의 결제여부를 바꾸고 해당 메시지를 리턴한다.
     -> 해당 카프카 토픽은 1파티션일듯
+    [완료]
     
     특정 채팅방 조회 -> 특정 채팅방의 내용들을 모두 다 가지고 온다.
     -> 특정 채팅방을 클릭하면 우선, 헤더로 날라온 값에 해당하는 사람이
@@ -76,6 +66,7 @@ public class KafkaConsumeTestService {
     (단! 구독권 모듈에 구독권 정보를 조회 후 존재하면 메시지를 숨기지 않는다 -> 서킷 브레이커)
     그리고 해당 채팅방의 IS_READ(TRANSMITTER_ID가 본인이 아닌)를 true로 설정한다
     -> /chatting/rooms/{roomId}
+    [완료]
 
     알림 로직 -> 카프카가 특정 방에 대해서 내용을 알림을 쏘면 받아주는 쪽에서 대화 창이 열려있으면
     (참고로 DB에 해당 채팅을 저장도 해야함.)
