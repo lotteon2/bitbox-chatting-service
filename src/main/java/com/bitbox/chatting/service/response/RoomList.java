@@ -8,7 +8,8 @@ import lombok.Builder;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class RoomList {
     private Long chatRoomId;
-    private String otherPerson;
+    private String otherPersonId;
+    private String otherPersonName;
     private String latestMessage;
     private boolean isSecret; // 해당 메시지가 결제가 안되어있는가?
 
@@ -23,7 +24,8 @@ public class RoomList {
     public static RoomList convertRoomMessageToRoomList(RoomMessage roomMessage){
         return RoomList.builder()
                 .chatRoomId(roomMessage.getChatRoomId())
-                .otherPerson(roomMessage.getOtherUserName())
+                .otherPersonId(roomMessage.getOtherUserId())
+                .otherPersonName(roomMessage.getOtherUserName())
                 .latestMessage(roomMessage.getLatestMessage())
                 .isSecret(false)
                 .build();

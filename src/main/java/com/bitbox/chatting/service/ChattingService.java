@@ -2,6 +2,7 @@ package com.bitbox.chatting.service;
 
 import com.bitbox.chatting.domain.Chat;
 import com.bitbox.chatting.domain.ChatRoom;
+import com.bitbox.chatting.dto.ChattingDto;
 import com.bitbox.chatting.dto.ChattingRoomDto;
 import com.bitbox.chatting.dto.SubscriptionServerInfoDto;
 import com.bitbox.chatting.exception.BadRequestException;
@@ -10,13 +11,11 @@ import com.bitbox.chatting.exception.PaymentFailException;
 import com.bitbox.chatting.repository.ChatRepository;
 import com.bitbox.chatting.repository.ChatRoomRepository;
 import com.bitbox.chatting.repository.response.RoomMessage;
-import com.bitbox.chatting.service.response.ChatResponse;
-import com.bitbox.chatting.service.response.ConnectionResponse;
-import com.bitbox.chatting.service.response.RoomList;
-import com.bitbox.chatting.service.response.RoomListResponse;
+import com.bitbox.chatting.service.response.*;
 import io.github.bitbox.bitbox.dto.MemberCreditDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +29,18 @@ import java.util.List;
 public class ChattingService {
     private final ChatRepository chatRepository;
     private final ChatRoomRepository chatRoomRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, RealTimeChatResponse> realTimeChatResponseKafkaTemplate;
+    private final KafkaTemplate<String, ChatRoomCreationEventResponse> creationKafkaTemplate;
+    private final KafkaTemplate<String, MemberCreditDto> memberCreditDtoKafkaTemplate;
+    @Value("${chatTopicName}")
+    private String chatTopicName;
+    @Value("${chatCreationTopicName}")
+    private String chatCreationTopicName;
+    @Value("${userCreditModifyTopicName}")
+    private String userCreditModifyTopicName;
 
     private final String guest = "guest";
-    private final int defultMinusCredit = 1;
+    private final int defultPlusCredit = 1;
 
     public ConnectionResponse getConnectionListWithUnreadMessage(String memberId){
         List<Long> chatRoomIds = chatRoomRepository.findChatRoomIdsByGuestIdOrHostId(memberId);
@@ -69,16 +76,24 @@ public class ChattingService {
             throw new BadRequestException("잘못된 요청입니다.");
         }
         chatRoomRepository.findByGuestIdAndHostId(chattingRoomDto.getGuestId(), chattingRoomDto.getHostId()).ifPresent(chatRoom ->{ throw new DuplicationRoomException("이미 방이 존재합니다");});
-        return chatRoomRepository.save(ChatRoom.convertChattingRoomDtoToChatRoom(chattingRoomDto));
+        ChatRoom returnChatRoom  = chatRoomRepository.save(ChatRoom.convertChattingRoomDtoToChatRoom(chattingRoomDto));
+
+        creationKafkaTemplate.send(chatCreationTopicName, ChatRoomCreationEventResponse.builder()
+                .hostId(returnChatRoom.getHostId())
+                .guestId(returnChatRoom.getGuestId())
+                .chatRoomId(returnChatRoom.getChatRoomId())
+                .build());
+        return returnChatRoom;
     }
 
     @Transactional
     public String payMessage(String memberId, long chatId) {
+        // TODO 이거 생각해봐야됨.
         Chat chat = null;
         try {
             chat = chatRepository.findById(chatId)
                     .orElseThrow(() -> {
-                        kafkaTemplate.send("토픽명", MemberCreditDto.builder().memberId(memberId).credit(defultMinusCredit).build());
+                        memberCreditDtoKafkaTemplate.send(userCreditModifyTopicName, MemberCreditDto.builder().memberId(memberId).credit(defultPlusCredit).build());
                         throw new PaymentFailException("메시지 정보를 찾을 수 없습니다");
                     });
 
@@ -86,7 +101,7 @@ public class ChattingService {
         }catch(PaymentFailException e){
             throw e;
         }catch(Exception e){
-            kafkaTemplate.send("토픽명", MemberCreditDto.builder().memberId(memberId).credit(defultMinusCredit).build());
+            memberCreditDtoKafkaTemplate.send(userCreditModifyTopicName, MemberCreditDto.builder().memberId(memberId).credit(defultPlusCredit).build());
         }
         return chat.getChatContent();
     }
@@ -113,8 +128,16 @@ public class ChattingService {
     }
 
     @Transactional
-    public void updateIsReadByChatId(Long chatId){
-        chatRepository.updateIsReadByChatId(chatId);
+    public void updateIsReadByChatId(Long chatId, String memberId){
+        chatRepository.updateIsReadByChatId(chatId, memberId);
+    }
+
+    @Transactional
+    public void createChat(boolean hasSubscription, ChattingDto chattingDto) {
+        ChatRoom chatRoom = chatRoomRepository.findById(chattingDto.getChatRoomId()).orElseThrow(() -> new BadRequestException("잘못된 요청입니다."));
+        Chat chat = chatRepository.save(Chat.createChat(chatRoom, chattingDto.getTransmitterId(), chattingDto.getChatContent()));
+        realTimeChatResponseKafkaTemplate.send(chatTopicName, RealTimeChatResponse.convertChatToRealTimeChatResponse(chattingDto.getChatRoomId(),
+                chat.getChatId(), chat.getChatContent(), chat.getTransmitterId(), hasSubscription));
     }
 
     private boolean isSecret(RoomMessage roomMessage, String memberId, boolean hasSubscription){ // 메시지를 숨겨야하는가 여부 판단
@@ -129,5 +152,4 @@ public class ChattingService {
 
         return true;
     }
-
 }

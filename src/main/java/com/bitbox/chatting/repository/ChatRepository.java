@@ -41,6 +41,10 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             "        WHEN host_id = :memberId THEN 'host' " +
             "    END AS role, " +
             "    CASE " +
+            "        WHEN guest_id = :memberId THEN host_id " +
+            "        WHEN host_id = :memberId THEN guest_id " +
+            "    END AS otherUserId, " +
+            "    CASE " +
             "        WHEN guest_id = :memberId THEN host_name " +
             "        WHEN host_id = :memberId THEN guest_name " +
             "    END AS otherUserName " +
@@ -92,6 +96,6 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
     );
 
     @Modifying
-    @Query("UPDATE Chat c SET c.isRead = true WHERE c.chatId = :chatId")
-    void updateIsReadByChatId(@Param("chatId") Long chatId);
+    @Query("UPDATE Chat c SET c.isRead = true WHERE c.chatId = :chatId AND c.transmitterId <> :memberId")
+    void updateIsReadByChatId(@Param("chatId") Long chatId, @Param("memberId") String memberId);
 }
