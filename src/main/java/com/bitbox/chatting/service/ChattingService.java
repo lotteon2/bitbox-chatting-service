@@ -7,10 +7,10 @@ import com.bitbox.chatting.dto.ChattingRoomDto;
 import com.bitbox.chatting.dto.SubscriptionServerInfoDto;
 import com.bitbox.chatting.exception.BadRequestException;
 import com.bitbox.chatting.exception.DuplicationRoomException;
+import com.bitbox.chatting.exception.KafkaPaymentFailException;
 import com.bitbox.chatting.exception.PaymentFailException;
 import com.bitbox.chatting.repository.ChatRepository;
 import com.bitbox.chatting.repository.ChatRoomRepository;
-import com.bitbox.chatting.repository.response.RoomMessage;
 import com.bitbox.chatting.service.response.*;
 import io.github.bitbox.bitbox.dto.MemberCreditDto;
 import lombok.RequiredArgsConstructor;
@@ -53,21 +53,10 @@ public class ChattingService {
     }
 
     public RoomListResponse getChattingRoomList(SubscriptionServerInfoDto subscriptionServerInfoDto, String memberId){
-        RoomListResponse roomListResponseList = new RoomListResponse();
-
-        List<RoomMessage> roomListWithLatestMessage = chatRepository.getRoomListWithLatestMessage(memberId);
-
-        for(RoomMessage roomMessage : roomListWithLatestMessage){
-            RoomList roomList = RoomList.convertRoomMessageToRoomList(roomMessage);
-            if(isSecret(roomMessage, memberId, subscriptionServerInfoDto.isHasSubscription())) {
-                roomList.setLatestMessage("");
-                roomList.setSecret(true);
-            }
-            roomListResponseList.getRoomList().add(roomList);
-        }
-
-        roomListResponseList.setMessage(subscriptionServerInfoDto.getMessage());
-        return roomListResponseList;
+        return RoomListResponse.builder()
+                .roomList(chatRepository.getRoomListWithLatestMessage(memberId, subscriptionServerInfoDto.isHasSubscription()))
+                .message(subscriptionServerInfoDto.getMessage())
+                .build();
     }
 
     @Transactional
@@ -100,8 +89,9 @@ public class ChattingService {
             chatRepository.updateIsPaid(chatId);
         }catch(PaymentFailException e){
             throw e;
-        }catch(Exception e){
+        }catch(Exception e){ // updateIsPaid를 하다가 예외가 발생한 경우
             memberCreditDtoKafkaTemplate.send(userCreditModifyTopicName, MemberCreditDto.builder().memberId(memberId).credit(defultPlusCredit).build());
+            throw new KafkaPaymentFailException("결제 실패");
         }
         return chat.getChatContent();
     }
@@ -128,28 +118,16 @@ public class ChattingService {
     }
 
     @Transactional
-    public void updateIsReadByChatId(Long chatId, String memberId){
-        chatRepository.updateIsReadByChatId(chatId, memberId);
+    public int updateIsReadByChatId(Long chatId, String memberId){
+        return chatRepository.updateIsReadByChatId(chatId, memberId);
     }
 
     @Transactional
-    public void createChat(boolean hasSubscription, ChattingDto chattingDto) {
+    public Chat createChat(boolean hasSubscription, ChattingDto chattingDto) {
         ChatRoom chatRoom = chatRoomRepository.findById(chattingDto.getChatRoomId()).orElseThrow(() -> new BadRequestException("잘못된 요청입니다."));
         Chat chat = chatRepository.save(Chat.createChat(chatRoom, chattingDto.getTransmitterId(), chattingDto.getChatContent()));
         realTimeChatResponseKafkaTemplate.send(chatTopicName, RealTimeChatResponse.convertChatToRealTimeChatResponse(chattingDto.getChatRoomId(),
                 chat.getChatId(), chat.getChatContent(), chat.getTransmitterId(), hasSubscription));
-    }
-
-    private boolean isSecret(RoomMessage roomMessage, String memberId, boolean hasSubscription){ // 메시지를 숨겨야하는가 여부 판단
-        // 구독권이 있는 케이스
-        // 결제여부가 있는 케이스
-        // 보낸사람과 memberId가 일치하는 케이스
-        // 내가 Host인 케이스
-        if(roomMessage.getLatestMessageIsPaid() == null || hasSubscription || roomMessage.getLatestMessageIsPaid()
-                || roomMessage.getLatestMessageSender().equals(memberId) || roomMessage.getRole().equals(guest)){
-            return false;
-        }
-
-        return true;
+        return chat;
     }
 }
