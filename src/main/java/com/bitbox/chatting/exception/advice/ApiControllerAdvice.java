@@ -2,6 +2,7 @@ package com.bitbox.chatting.exception.advice;
 
 import com.bitbox.chatting.exception.BadRequestException;
 import com.bitbox.chatting.exception.DuplicationRoomException;
+import com.bitbox.chatting.exception.KafkaPaymentFailException;
 import com.bitbox.chatting.exception.PaymentFailException;
 import com.bitbox.chatting.exception.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,13 @@ public class ApiControllerAdvice {
     @ExceptionHandler(PaymentFailException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handlePaymentFailException(BadRequestException e){
+        return getErrorResponse(e);
+    }
+
+    // 긴급건
+    @ExceptionHandler(KafkaPaymentFailException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ErrorResponse handleKafkaPaymentFailException(KafkaPaymentFailException e){
         return getErrorResponse(e);
     }
 
