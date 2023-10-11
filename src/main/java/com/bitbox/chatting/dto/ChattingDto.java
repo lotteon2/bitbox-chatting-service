@@ -1,11 +1,14 @@
 package com.bitbox.chatting.dto;
 
+import com.bitbox.chatting.domain.Chat;
+import com.bitbox.chatting.domain.ChatRoom;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
@@ -29,5 +32,14 @@ public class ChattingDto {
 
     public void setTransmitterId(String transmitterId) {
         this.transmitterId = transmitterId;
+    }
+
+    public static Chat createChat(ChatRoom chatRoom, String transmitterId, String chatContent) {
+        return Chat.builder()
+                .chatRoom(chatRoom)
+                .transmitterId(transmitterId)
+                .chatContent(chatContent)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 }
