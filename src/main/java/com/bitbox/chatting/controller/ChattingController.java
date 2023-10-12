@@ -44,8 +44,8 @@ public class ChattingController {
     }
 
     @GetMapping("chatting-room/{roomId}")
-    public List<ChatResponse> chatting(@PathVariable long roomId){
-        return chattingService.getChatting(headerMemberId, getSubscription(null), roomId);
+    public ResponseEntity<List<ChatResponse>> chatting(@PathVariable long roomId){
+        return ResponseEntity.ok(chattingService.getChatting(headerMemberId, getSubscription(null), roomId));
     }
 
     @PostMapping("chatting-room")
