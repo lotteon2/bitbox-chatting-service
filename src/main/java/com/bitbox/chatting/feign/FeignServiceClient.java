@@ -1,7 +1,10 @@
 package com.bitbox.chatting.feign;
 
 import com.bitbox.chatting.dto.SubscriptionResponseDto;
+import feign.RequestInterceptor;
+import feign.RequestTemplate;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -18,4 +21,13 @@ public interface FeignServiceClient {
 
     @PatchMapping("/user-service/member/credit")
     ResponseEntity<Void> updateMemberCredit(int credit);
+
+    // TODO 무슨 토큰이더라?
+    /*@Bean
+    default RequestInterceptor requestInterceptor() {
+        return template -> {
+            template.header("Authorization", "Bearer YourAccessToken");
+            template.header("CustomHeader", "CustomValue");
+        };
+    }*/
 }

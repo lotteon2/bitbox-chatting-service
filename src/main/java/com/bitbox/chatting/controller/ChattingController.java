@@ -29,49 +29,49 @@ public class ChattingController {
     private final ChattingService chattingService;
     private final FeignServiceClient feignServiceClient;
     private final CircuitBreakerFactory circuitBreakerFactory;
-    private String headerMemberId = "csh"; // TODO HEADER값으로 변경 필요
-    private String headerMemberName = "최성훈";
+    //private String headerMemberId = "csh"; // TODO HEADER값으로 변경 필요
+    //private String headerMemberName = "최성훈";
     private final int defultMinusCredit = 1;
 
     @GetMapping("connection/list")
-    public ResponseEntity<ConnectionResponse> connectionList(){
-        return ResponseEntity.ok(chattingService.getConnectionListWithUnreadMessage(headerMemberId));
+    public ResponseEntity<ConnectionResponse> connectionList(@RequestHeader String memberId){
+        return ResponseEntity.ok(chattingService.getConnectionListWithUnreadMessage(memberId));
     }
 
     @GetMapping("chatting-room")
-    public ResponseEntity<RoomListResponse> chattingRoomList(){
-        return ResponseEntity.ok(chattingService.getChattingRoomList(getSubscription(null), headerMemberId));
+    public ResponseEntity<RoomListResponse> chattingRoomList(@RequestHeader String memberId){
+        return ResponseEntity.ok(chattingService.getChattingRoomList(getSubscription(null), memberId));
     }
 
     @GetMapping("chatting-room/{roomId}")
-    public ResponseEntity<List<ChatResponse>> chatting(@PathVariable long roomId){
-        return ResponseEntity.ok(chattingService.getChatting(headerMemberId, getSubscription(null), roomId));
+    public ResponseEntity<List<ChatResponse>> chatting(@RequestHeader String memberId, @PathVariable long roomId){
+        return ResponseEntity.ok(chattingService.getChatting(memberId, getSubscription(null), roomId));
     }
 
     @PostMapping("chatting-room")
-    public ResponseEntity<ChatRoom> createChatRoom(@RequestBody ChattingRoomDto chattingRoomDto){
-        chattingRoomDto.setHostId(headerMemberId);
-        chattingRoomDto.setHostName(headerMemberName);
+    public ResponseEntity<ChatRoom> createChatRoom(@RequestHeader String memberId, @RequestHeader String memberNickname, @RequestBody ChattingRoomDto chattingRoomDto){
+        chattingRoomDto.setHostId(memberId);
+        chattingRoomDto.setHostName(memberNickname);
         return ResponseEntity.ok(chattingService.createChatRoom(chattingRoomDto));
     }
 
     @PostMapping("message/{messageId}")
-    public ResponseEntity<String> payMessage(@PathVariable long messageId){
+    public ResponseEntity<String> payMessage(@RequestHeader String memberId, @PathVariable long messageId){
         if(!feignServiceClient.updateMemberCredit(-defultMinusCredit).getStatusCode().equals(HttpStatus.OK)){
             throw new PaymentFailException("결제 실패 했습니다.");
         }
-        return ResponseEntity.ok(chattingService.payMessage(headerMemberId, messageId));
+        return ResponseEntity.ok(chattingService.payMessage(memberId, messageId));
     }
 
     @PatchMapping("chatting-room/{roomId}/messages/{messageId}/mark-as-read")
-    public ResponseEntity<Void> updateIsRead(@PathVariable long messageId){
-        chattingService.updateIsReadByChatId(messageId, headerMemberId);
+    public ResponseEntity<Void> updateIsRead(@RequestHeader String memberId, @PathVariable long messageId){
+        chattingService.updateIsReadByChatId(messageId, memberId);
         return ResponseEntity.ok().build();
     }
 
     @MessageMapping("{roomId}")
-    public void sendMessageToKafka(@DestinationVariable Long roomId, ChattingDto chattingDto) {
-        chattingDto.setTransmitterId(headerMemberId);
+    public void sendMessageToKafka(@RequestHeader String memberId, @DestinationVariable Long roomId, ChattingDto chattingDto) {
+        chattingDto.setTransmitterId(memberId);
         chattingDto.setChatRoomId(roomId);
         chattingService.createChat(getSubscription(chattingDto.getReceiverId()).isHasSubscription(), chattingDto);
     }
