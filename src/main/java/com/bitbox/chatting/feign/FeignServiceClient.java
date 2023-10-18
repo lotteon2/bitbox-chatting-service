@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "apigateway-service")
+@FeignClient(name = "feignClient",
+            url = "localhost:8000")
 public interface FeignServiceClient {
     @GetMapping("/payment-service/member/subscription")
     @Headers("Authorization")
