@@ -6,11 +6,13 @@ import com.bitbox.chatting.dto.ChattingRoomDto;
 import com.bitbox.chatting.dto.SubscriptionResponseDto;
 import com.bitbox.chatting.dto.SubscriptionServerInfoDto;
 import com.bitbox.chatting.exception.PaymentFailException;
-import com.bitbox.chatting.feign.FeignServiceClient;
+import com.bitbox.chatting.feign.PaymentFeignServiceClient;
+import com.bitbox.chatting.feign.UserFeignServiceClient;
 import com.bitbox.chatting.service.ChattingService;
 import com.bitbox.chatting.service.response.ChatResponse;
 import com.bitbox.chatting.service.response.ConnectionResponse;
 import com.bitbox.chatting.service.response.RoomListResponse;
+import io.github.bitbox.bitbox.dto.MemberCreditDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
@@ -27,10 +29,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChattingController {
     private final ChattingService chattingService;
-    private final FeignServiceClient feignServiceClient;
+    private final PaymentFeignServiceClient paymentFeignServiceClient;
+    private final UserFeignServiceClient userFeignServiceClient;
     private final CircuitBreakerFactory circuitBreakerFactory;
-    //private String headerMemberId = "csh"; // TODO HEADER값으로 변경 필요
-    //private String headerMemberName = "최성훈";
     private final int defultMinusCredit = 1;
 
     @GetMapping("connection/list")
@@ -57,13 +58,13 @@ public class ChattingController {
 
     @PostMapping("message/{messageId}")
     public ResponseEntity<String> payMessage(@RequestHeader String memberId, @PathVariable long messageId){
-        if(!feignServiceClient.updateMemberCredit(-defultMinusCredit).getStatusCode().equals(HttpStatus.OK)){
+        if(!userFeignServiceClient.updateMemberCredit(MemberCreditDto.builder().credit(-defultMinusCredit).memberId(memberId).build()).getStatusCode().equals(HttpStatus.OK)){
             throw new PaymentFailException("결제 실패 했습니다.");
         }
         return ResponseEntity.ok(chattingService.payMessage(memberId, messageId));
     }
 
-    @PatchMapping("chatting-room/{roomId}/messages/{messageId}/mark-as-read")
+    @PatchMapping("messages/{messageId}/mark-as-read")
     public ResponseEntity<Void> updateIsRead(@RequestHeader String memberId, @PathVariable long messageId){
         chattingService.updateIsReadByChatId(messageId, memberId);
         return ResponseEntity.ok().build();
@@ -81,9 +82,9 @@ public class ChattingController {
         SubscriptionResponseDto subscriptionResponseDto;
 
         if(memberId == null) { // 본인의 구독권 확인
-            subscriptionResponseDto = circuitbreaker.run(feignServiceClient::getSubscription, throwable -> null);
+            subscriptionResponseDto = circuitbreaker.run(paymentFeignServiceClient::getSubscription, throwable -> null);
         }else{ // 상대방의 구독권 확인
-            subscriptionResponseDto = circuitbreaker.run(() -> feignServiceClient.getSubscription(memberId), throwable -> null);
+            subscriptionResponseDto = circuitbreaker.run(() -> paymentFeignServiceClient.getSubscription(memberId), throwable -> null);
         }
 
         SubscriptionServerInfoDto subscriptionServerInfoDto = new SubscriptionServerInfoDto();
