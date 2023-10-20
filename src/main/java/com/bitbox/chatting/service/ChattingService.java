@@ -65,7 +65,7 @@ public class ChattingService {
             throw new BadRequestException("잘못된 요청입니다.");
         }
         chatRoomRepository.findByGuestIdAndHostId(chattingRoomDto.getGuestId(), chattingRoomDto.getHostId()).ifPresent(chatRoom ->{ throw new DuplicationRoomException("이미 방이 존재합니다");});
-        ChatRoom returnChatRoom  = chatRoomRepository.save(ChatRoom.convertChattingRoomDtoToChatRoom(chattingRoomDto));
+        ChatRoom returnChatRoom  = chatRoomRepository.save(ChattingRoomDto.convertChattingRoomDtoToChatRoom(chattingRoomDto));
 
         creationKafkaTemplate.send(chatCreationTopicName, ChatRoomCreationEventResponse.builder()
                 .hostId(returnChatRoom.getHostId())
@@ -125,7 +125,7 @@ public class ChattingService {
     @Transactional
     public Chat createChat(boolean hasSubscription, ChattingDto chattingDto) {
         ChatRoom chatRoom = chatRoomRepository.findById(chattingDto.getChatRoomId()).orElseThrow(() -> new BadRequestException("잘못된 요청입니다."));
-        Chat chat = chatRepository.save(Chat.createChat(chatRoom, chattingDto.getTransmitterId(), chattingDto.getChatContent()));
+        Chat chat = chatRepository.save(ChattingDto.createChat(chatRoom, chattingDto.getTransmitterId(), chattingDto.getChatContent()));
         realTimeChatResponseKafkaTemplate.send(chatTopicName, RealTimeChatResponse.convertChatToRealTimeChatResponse(chattingDto.getChatRoomId(),
                 chat.getChatId(), chat.getChatContent(), chat.getTransmitterId(), hasSubscription));
         return chat;

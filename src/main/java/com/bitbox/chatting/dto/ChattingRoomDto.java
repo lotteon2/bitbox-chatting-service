@@ -1,5 +1,6 @@
 package com.bitbox.chatting.dto;
 
+import com.bitbox.chatting.domain.ChatRoom;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,4 +22,13 @@ public class ChattingRoomDto {
     @NotEmpty(message = "게스트 별칭은 비어있을 수 없습니다.")
     @Size(max=100, message = "게스트 별칭은 최대 100까지 입력 가능합니다.")
     private String guestName;
+
+    public static ChatRoom convertChattingRoomDtoToChatRoom(ChattingRoomDto chattingRoomDto){
+        return ChatRoom.builder()
+                .hostId(chattingRoomDto.getHostId())
+                .hostName(chattingRoomDto.getHostName())
+                .guestId(chattingRoomDto.getGuestId())
+                .guestName(chattingRoomDto.getGuestName())
+                .build();
+    }
 }
