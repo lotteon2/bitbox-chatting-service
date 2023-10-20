@@ -55,7 +55,7 @@ public class ChattingService {
     public RoomListResponse getChattingRoomList(SubscriptionServerInfoDto subscriptionServerInfoDto, String memberId){
         return RoomListResponse.builder()
                 .roomList(chatRepository.getRoomListWithLatestMessage(memberId, subscriptionServerInfoDto.isHasSubscription()))
-                .message(subscriptionServerInfoDto.getMessage())
+//                .message(subscriptionServerInfoDto.getMessage())
                 .build();
     }
 

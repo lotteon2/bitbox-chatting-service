@@ -7,5 +7,5 @@ import lombok.Setter;
 @Getter
 public class SubscriptionServerInfoDto {
     boolean hasSubscription;
-    String message;
+//    String message;
 }
