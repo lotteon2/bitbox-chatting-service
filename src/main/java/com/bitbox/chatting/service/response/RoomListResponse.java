@@ -9,5 +9,5 @@ import java.util.List;
 @Builder
 public class RoomListResponse {
     private List<RoomList> roomList;
-//    private String message;
+    private String message;
 }

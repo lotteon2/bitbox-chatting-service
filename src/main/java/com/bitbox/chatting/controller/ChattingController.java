@@ -31,7 +31,7 @@ public class ChattingController {
     private final ChattingService chattingService;
     private final PaymentFeignServiceClient paymentFeignServiceClient;
     private final UserFeignServiceClient userFeignServiceClient;
-//    private final CircuitBreakerFactory circuitBreakerFactory;
+    private final CircuitBreakerFactory circuitBreakerFactory;
     private final int defultMinusCredit = 1;
 
     @GetMapping("connection/list")
@@ -78,21 +78,16 @@ public class ChattingController {
     }
 
     private SubscriptionServerInfoDto getSubscription(String memberId) {
-//        CircuitBreaker circuitbreaker = circuitBreakerFactory.create("circuitbreaker");
+        CircuitBreaker circuitbreaker = circuitBreakerFactory.create("circuitbreaker");
         SubscriptionResponseDto subscriptionResponseDto;
 
-        subscriptionResponseDto = paymentFeignServiceClient.getSubscription(memberId);
-//        subscriptionResponseDto = circuitbreaker.run(() -> paymentFeignServiceClient.getSubscription(memberId), throwable -> null);
-//        if(memberId == null) {
-//            subscriptionResponseDto = circuitbreaker.run(paymentFeignServiceClient::getSubscription, throwable -> null);
-//        }else{ // 상대방의 구독권 확인
-//            subscriptionResponseDto = circuitbreaker.run(() -> paymentFeignServiceClient.getSubscription(memberId), throwable -> null);
-//        }
+        subscriptionResponseDto = circuitbreaker.run(() -> paymentFeignServiceClient.getSubscription(memberId), throwable -> null);
 
         SubscriptionServerInfoDto subscriptionServerInfoDto = new SubscriptionServerInfoDto();
-//        if (subscriptionResponseDto == null) { // 구독권 서버를 확인할 수 없는 경우
-//            subscriptionServerInfoDto.setMessage("구독권 정보를 확인할 수 없습니다.");
-//        }
+
+        if (subscriptionResponseDto == null) { // 구독권 서버를 확인할 수 없는 경우
+            subscriptionServerInfoDto.setMessage("구독권 정보를 확인할 수 없습니다.");
+        }
 
         subscriptionServerInfoDto.setHasSubscription(subscriptionResponseDto != null && subscriptionResponseDto.isValid());
 
