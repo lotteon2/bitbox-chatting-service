@@ -46,14 +46,4 @@ public class Chat {
         this.chatContent = chatContent;
         this.createdAt = createdAt;
     }
-
-
-    public static Chat createChat(ChatRoom chatRoom, String transmitterId, String chatContent) {
-        return Chat.builder()
-                .chatRoom(chatRoom)
-                .transmitterId(transmitterId)
-                .chatContent(chatContent)
-                .createdAt(LocalDateTime.now())
-                .build();
-    }
 }

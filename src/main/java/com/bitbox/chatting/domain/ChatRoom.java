@@ -41,13 +41,4 @@ public class ChatRoom {
     public Long getChatRoomId() {
         return chatRoomId;
     }
-
-    public static ChatRoom convertChattingRoomDtoToChatRoom(ChattingRoomDto chattingRoomDto){
-        return ChatRoom.builder()
-                .hostId(chattingRoomDto.getHostId())
-                .hostName(chattingRoomDto.getHostName())
-                .guestId(chattingRoomDto.getGuestId())
-                .guestName(chattingRoomDto.getGuestName())
-                .build();
-    }
 }

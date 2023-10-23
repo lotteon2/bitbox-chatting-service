@@ -69,25 +69,25 @@ class ChattingServiceTest {
 
         List<Chat> chattingList = new ArrayList<>();
         // 1번 채팅방
-        chattingList.add(Chat.createChat(chatRoom1, "csh", "대구는 따뜻하니?"));
-        chattingList.add(Chat.createChat(chatRoom1, "cki", "아니 따뜻하지 않는데? 앞에봐 1:0"));
-        chattingList.add(Chat.createChat(chatRoom1, "cki", "."));
-        chattingList.add(Chat.createChat(chatRoom1, "csh", "그래.."));
+        chattingList.add(ChattingDto.createChat(chatRoom1, "csh", "대구는 따뜻하니?"));
+        chattingList.add(ChattingDto.createChat(chatRoom1, "cki", "아니 따뜻하지 않는데? 앞에봐 1:0"));
+        chattingList.add(ChattingDto.createChat(chatRoom1, "cki", "."));
+        chattingList.add(ChattingDto.createChat(chatRoom1, "csh", "그래.."));
 
         // 2번 채팅방
-        chattingList.add(Chat.createChat(chatRoom2, "cyj", "아니 회사에서 자꾸 문서만 시키는데 이게 맞냐?"));
-        chattingList.add(Chat.createChat(chatRoom2, "cyj", "하.. 관둘까?"));
-        chattingList.add(Chat.createChat(chatRoom2, "cyj", "어케 생각함"));
-        chattingList.add(Chat.createChat(chatRoom2, "csh", "근데 너는 그런게 딱인데?"));
+        chattingList.add(ChattingDto.createChat(chatRoom2, "cyj", "아니 회사에서 자꾸 문서만 시키는데 이게 맞냐?"));
+        chattingList.add(ChattingDto.createChat(chatRoom2, "cyj", "하.. 관둘까?"));
+        chattingList.add(ChattingDto.createChat(chatRoom2, "cyj", "어케 생각함"));
+        chattingList.add(ChattingDto.createChat(chatRoom2, "csh", "근데 너는 그런게 딱인데?"));
 
         // 3번 채팅방
-        chattingList.add(Chat.createChat(chatRoom3, "cyj", "국일아 오랜만에"));
-        chattingList.add(Chat.createChat(chatRoom3, "cyj", "얼굴좀 보자"));
-        chattingList.add(Chat.createChat(chatRoom3, "cyj", "씹지말고"));
-        chattingList.add(Chat.createChat(chatRoom3, "cyj", "응?"));
+        chattingList.add(ChattingDto.createChat(chatRoom3, "cyj", "국일아 오랜만에"));
+        chattingList.add(ChattingDto.createChat(chatRoom3, "cyj", "얼굴좀 보자"));
+        chattingList.add(ChattingDto.createChat(chatRoom3, "cyj", "씹지말고"));
+        chattingList.add(ChattingDto.createChat(chatRoom3, "cyj", "응?"));
 
         // 4번 채팅방
-        chattingList.add(Chat.createChat(chatRoom4, "csh", ".?"));
+        chattingList.add(ChattingDto.createChat(chatRoom4, "csh", ".?"));
         chatRepository.saveAll(chattingList);
     }
 
