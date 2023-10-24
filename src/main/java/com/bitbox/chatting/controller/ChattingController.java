@@ -22,6 +22,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RequestMapping("/")
@@ -50,9 +51,12 @@ public class ChattingController {
     }
 
     @PostMapping("chatting-room")
-    public ResponseEntity<ChatRoom> createChatRoom(@RequestHeader String memberId, @RequestHeader String memberNickname, @RequestBody ChattingRoomDto chattingRoomDto){
+    public ResponseEntity<ChatRoom> createChatRoom(@RequestHeader String memberId, @RequestHeader String memberNickname,
+                                                   @RequestHeader String memberProfileImg, @Valid @RequestBody ChattingRoomDto chattingRoomDto){
         chattingRoomDto.setHostId(memberId);
         chattingRoomDto.setHostName(memberNickname);
+        chattingRoomDto.setHostProfileImg(memberProfileImg);
+
         return ResponseEntity.ok(chattingService.createChatRoom(chattingRoomDto));
     }
 
