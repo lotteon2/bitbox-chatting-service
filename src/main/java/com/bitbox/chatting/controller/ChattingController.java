@@ -75,8 +75,7 @@ public class ChattingController {
     }
 
     @MessageMapping("{roomId}")
-    public void sendMessageToKafka(@RequestHeader String memberId, @DestinationVariable Long roomId, ChattingDto chattingDto) {
-        chattingDto.setTransmitterId(memberId);
+    public void sendMessageToKafka(@DestinationVariable Long roomId, @Valid ChattingDto chattingDto) {
         chattingDto.setChatRoomId(roomId);
         chattingService.createChat(getSubscription(chattingDto.getReceiverId()).isHasSubscription(), chattingDto);
     }
