@@ -20,6 +20,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -125,6 +126,8 @@ public class ChattingService {
     @Transactional
     public Chat createChat(boolean hasSubscription, ChattingDto chattingDto) {
         ChatRoom chatRoom = chatRoomRepository.findById(chattingDto.getChatRoomId()).orElseThrow(() -> new BadRequestException("잘못된 요청입니다."));
+        chatRoom.setUpdatedAt(LocalDateTime.now());
+
         Chat chat = chatRepository.save(ChattingDto.createChat(chatRoom, chattingDto.getTransmitterId(), chattingDto.getChatContent()));
         realTimeChatResponseKafkaTemplate.send(chatTopicName, RealTimeChatResponse.convertChatToRealTimeChatResponse(chattingDto.getChatRoomId(),
                 chat.getChatId(), chat.getChatContent(), chat.getTransmitterId(), hasSubscription));

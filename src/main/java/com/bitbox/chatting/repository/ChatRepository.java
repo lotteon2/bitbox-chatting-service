@@ -21,6 +21,7 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
     // [TODO] NATIVE QUERY이므로 주의
     @Query(value = "WITH LatestMessages AS ("
             + "SELECT"
+            + "    cr.updated_at,"
             + "    cr.chat_room_id,"
             + "    c.chat_content AS latest_message,"
             + "    c.is_paid AS latest_message_is_paid,"
@@ -59,7 +60,7 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             + "    END AS isSecret "
             + "FROM LatestMessages "
             + "WHERE rn = 1 "
-            + "ORDER BY chat_room_id", nativeQuery = true)
+            + "ORDER BY updated_at desc", nativeQuery = true)
     List<RoomList> getRoomListWithLatestMessage(@Param("memberId") String memberId, @Param("secretFlag") boolean secretFlag);
 
     // [TODO] NATIVE QUERY이므로 주의
