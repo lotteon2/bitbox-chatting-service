@@ -62,7 +62,7 @@ public class ChattingController {
 
     @PostMapping("message/{messageId}")
     public ResponseEntity<String> payMessage(@RequestHeader String memberId, @PathVariable long messageId){
-        if(!userFeignServiceClient.updateMemberCredit(MemberCreditDto.builder().credit(-defultMinusCredit).memberId(memberId).build()).getStatusCode().equals(HttpStatus.OK)){
+        if(!userFeignServiceClient.updateMemberCredit(MemberCreditDto.builder().credit(defultMinusCredit).memberId(memberId).build()).getStatusCode().equals(HttpStatus.OK)){
             throw new PaymentFailException("결제 실패 했습니다.");
         }
         return ResponseEntity.ok(chattingService.payMessage(memberId, messageId));
