@@ -39,8 +39,6 @@ public class ChattingService {
     private String chatCreationTopicName;
     @Value("${userCreditModifyTopicName}")
     private String userCreditModifyTopicName;
-
-    private final String guest = "guest";
     private final int defultPlusCredit = 1;
 
     public ConnectionResponse getConnectionListWithUnreadMessage(String memberId){
@@ -66,7 +64,7 @@ public class ChattingService {
             throw new BadRequestException("잘못된 요청입니다.");
         }
         chatRoomRepository.findByGuestIdAndHostId(chattingRoomDto.getGuestId(), chattingRoomDto.getHostId()).ifPresent(chatRoom ->{ throw new DuplicationRoomException("이미 방이 존재합니다");});
-        ChatRoom returnChatRoom  = chatRoomRepository.save(ChattingRoomDto.convertChattingRoomDtoToChatRoom(chattingRoomDto));
+        ChatRoom returnChatRoom = chatRoomRepository.save(ChattingRoomDto.convertChattingRoomDtoToChatRoom(chattingRoomDto));
 
         creationKafkaTemplate.send(chatCreationTopicName, ChatRoomCreationEventResponse.builder()
                 .hostId(returnChatRoom.getHostId())

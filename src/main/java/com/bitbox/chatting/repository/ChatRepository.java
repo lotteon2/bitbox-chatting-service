@@ -38,6 +38,8 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             + "WHERE (cr.guest_id = :memberId OR cr.host_id = :memberId)) "
             + "SELECT "
             + "    chat_room_id AS chatRoomId,"
+            + "    host_id AS hostId,"
+            + "    guest_id AS guestId,"
             + "    CASE "
             + "        WHEN guest_id = :memberId THEN host_id "
             + "        WHEN host_id = :memberId THEN guest_id "
