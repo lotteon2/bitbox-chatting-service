@@ -21,6 +21,7 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
     // [TODO] NATIVE QUERY이므로 주의
     @Query(value = "WITH LatestMessages AS ("
             + "SELECT"
+            + "    cr.updated_at,"
             + "    cr.chat_room_id,"
             + "    c.chat_content AS latest_message,"
             + "    c.is_paid AS latest_message_is_paid,"
@@ -29,6 +30,8 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             + "    cr.host_id AS host_id,"
             + "    cr.guest_name AS guest_name,"
             + "    cr.host_name AS host_name,"
+            + "    cr.guest_profile_img AS guest_profile_img,"
+            + "    cr.host_profile_img AS host_profile_img,"
             + "    ROW_NUMBER() OVER(PARTITION BY cr.chat_room_id ORDER BY c.created_at DESC) AS rn "
             + "FROM chat c "
             + "RIGHT JOIN chat_room cr ON c.chat_room_id = cr.chat_room_id "
@@ -43,6 +46,10 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             + "        WHEN guest_id = :memberId THEN host_name "
             + "        WHEN host_id = :memberId THEN guest_name "
             + "    END AS otherUserName,"
+            + "    CASE "
+            + "        WHEN guest_id = :memberId THEN host_profile_img "
+            + "        WHEN host_id = :memberId THEN guest_profile_img "
+            + "    END AS otherUserProfileImg,"
             + "    CASE WHEN latest_message_is_paid = 1 OR guest_id = :memberId OR :secretFlag = true OR latest_message_sender = :memberId OR latest_message IS NULL "
             + "         THEN latest_message "
             + "         ELSE '' "
@@ -53,7 +60,7 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
             + "    END AS isSecret "
             + "FROM LatestMessages "
             + "WHERE rn = 1 "
-            + "ORDER BY chat_room_id", nativeQuery = true)
+            + "ORDER BY updated_at desc", nativeQuery = true)
     List<RoomList> getRoomListWithLatestMessage(@Param("memberId") String memberId, @Param("secretFlag") boolean secretFlag);
 
     // [TODO] NATIVE QUERY이므로 주의

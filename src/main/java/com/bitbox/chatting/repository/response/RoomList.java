@@ -8,4 +8,6 @@ public interface RoomList {
 
     // TODO boolean type으로 변경하고 싶다.
     long getIsSecret(); // hidden 여부
+
+    String getOtherUserProfileImg(); // 상대방 프로필 이미지 url
 }

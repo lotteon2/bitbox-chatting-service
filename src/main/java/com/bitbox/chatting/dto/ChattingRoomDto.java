@@ -5,30 +5,29 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
 
 @Getter
 @Setter
 public class ChattingRoomDto {
-    @NotEmpty(message = "호스트 아이디는 비어있을 수 없습니다.")
-    @Size(max=16, message = "호스트 아이디는 최대 16자까지 입력 가능합니다.")
     private String hostId;
-    @NotEmpty(message = "호스트 별칭은 비어있을 수 없습니다.")
-    @Size(max=100, message = "호스트 별칭은 최대 100까지 입력 가능합니다.")
     private String hostName;
+    private String hostProfileImg;
+
     @NotEmpty(message = "게스트 아이디는 비어있을 수 없습니다.")
-    @Size(max=16, message = "게스트 아이디는 최대 16자까지 입력 가능합니다.")
     private String guestId;
     @NotEmpty(message = "게스트 별칭은 비어있을 수 없습니다.")
-    @Size(max=100, message = "게스트 별칭은 최대 100까지 입력 가능합니다.")
     private String guestName;
+    @NotEmpty(message = "게스트 프로필 비어있을 수 없습니다.")
+    private String guestProfileImg;
 
     public static ChatRoom convertChattingRoomDtoToChatRoom(ChattingRoomDto chattingRoomDto){
         return ChatRoom.builder()
                 .hostId(chattingRoomDto.getHostId())
                 .hostName(chattingRoomDto.getHostName())
+                .hostProfileImg(chattingRoomDto.getHostProfileImg())
                 .guestId(chattingRoomDto.getGuestId())
                 .guestName(chattingRoomDto.getGuestName())
+                .guestProfileImg(chattingRoomDto.getGuestProfileImg())
                 .build();
     }
 }

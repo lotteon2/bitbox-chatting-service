@@ -22,6 +22,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RequestMapping("/")
@@ -41,24 +42,27 @@ public class ChattingController {
 
     @GetMapping("chatting-room")
     public ResponseEntity<RoomListResponse> chattingRoomList(@RequestHeader String memberId){
-        return ResponseEntity.ok(chattingService.getChattingRoomList(getSubscription(null), memberId));
+        return ResponseEntity.ok(chattingService.getChattingRoomList(getSubscription(memberId), memberId));
     }
 
     @GetMapping("chatting-room/{roomId}")
     public ResponseEntity<List<ChatResponse>> chatting(@RequestHeader String memberId, @PathVariable long roomId){
-        return ResponseEntity.ok(chattingService.getChatting(memberId, getSubscription(null), roomId));
+        return ResponseEntity.ok(chattingService.getChatting(memberId, getSubscription(memberId), roomId));
     }
 
     @PostMapping("chatting-room")
-    public ResponseEntity<ChatRoom> createChatRoom(@RequestHeader String memberId, @RequestHeader String memberNickname, @RequestBody ChattingRoomDto chattingRoomDto){
+    public ResponseEntity<ChatRoom> createChatRoom(@RequestHeader String memberId, @RequestHeader String memberNickname,
+                                                   @RequestHeader String memberProfileImg, @Valid @RequestBody ChattingRoomDto chattingRoomDto){
         chattingRoomDto.setHostId(memberId);
         chattingRoomDto.setHostName(memberNickname);
+        chattingRoomDto.setHostProfileImg(memberProfileImg);
+
         return ResponseEntity.ok(chattingService.createChatRoom(chattingRoomDto));
     }
 
     @PostMapping("message/{messageId}")
     public ResponseEntity<String> payMessage(@RequestHeader String memberId, @PathVariable long messageId){
-        if(!userFeignServiceClient.updateMemberCredit(MemberCreditDto.builder().credit(-defultMinusCredit).memberId(memberId).build()).getStatusCode().equals(HttpStatus.OK)){
+        if(!userFeignServiceClient.updateMemberCredit(MemberCreditDto.builder().credit(defultMinusCredit).memberId(memberId).build()).getStatusCode().equals(HttpStatus.OK)){
             throw new PaymentFailException("결제 실패 했습니다.");
         }
         return ResponseEntity.ok(chattingService.payMessage(memberId, messageId));
@@ -71,8 +75,7 @@ public class ChattingController {
     }
 
     @MessageMapping("{roomId}")
-    public void sendMessageToKafka(@RequestHeader String memberId, @DestinationVariable Long roomId, ChattingDto chattingDto) {
-        chattingDto.setTransmitterId(memberId);
+    public void sendMessageToKafka(@DestinationVariable Long roomId, @Valid ChattingDto chattingDto) {
         chattingDto.setChatRoomId(roomId);
         chattingService.createChat(getSubscription(chattingDto.getReceiverId()).isHasSubscription(), chattingDto);
     }
@@ -81,11 +84,7 @@ public class ChattingController {
         CircuitBreaker circuitbreaker = circuitBreakerFactory.create("circuitbreaker");
         SubscriptionResponseDto subscriptionResponseDto;
 
-        if(memberId == null) { // 본인의 구독권 확인
-            subscriptionResponseDto = circuitbreaker.run(paymentFeignServiceClient::getSubscription, throwable -> null);
-        }else{ // 상대방의 구독권 확인
-            subscriptionResponseDto = circuitbreaker.run(() -> paymentFeignServiceClient.getSubscription(memberId), throwable -> null);
-        }
+        subscriptionResponseDto = circuitbreaker.run(() -> paymentFeignServiceClient.getSubscription(memberId), throwable -> null);
 
         SubscriptionServerInfoDto subscriptionServerInfoDto = new SubscriptionServerInfoDto();
 

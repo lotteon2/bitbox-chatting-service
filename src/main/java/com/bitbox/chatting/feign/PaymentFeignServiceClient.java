@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name="payment-service")
 public interface PaymentFeignServiceClient {
-    @GetMapping("/member/subscription")
-    SubscriptionResponseDto getSubscription();
+//    @GetMapping("/member/subscription")
+//    SubscriptionResponseDto getSubscriptionWith(@RequestParam String memberId);
 
     @GetMapping("/member/{memberId}/subscription")
     SubscriptionResponseDto getSubscription(@PathVariable String memberId);
