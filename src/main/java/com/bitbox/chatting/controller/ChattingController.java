@@ -23,6 +23,9 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RequestMapping("/")
@@ -54,7 +57,11 @@ public class ChattingController {
     public ResponseEntity<ChatRoom> createChatRoom(@RequestHeader String memberId, @RequestHeader String memberNickname,
                                                    @RequestHeader String memberProfileImg, @Valid @RequestBody ChattingRoomDto chattingRoomDto){
         chattingRoomDto.setHostId(memberId);
-        chattingRoomDto.setHostName(memberNickname);
+        try {
+            chattingRoomDto.setHostName(URLDecoder.decode(memberNickname, StandardCharsets.UTF_8.name()));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
         chattingRoomDto.setHostProfileImg(memberProfileImg);
 
         return ResponseEntity.ok(chattingService.createChatRoom(chattingRoomDto));
