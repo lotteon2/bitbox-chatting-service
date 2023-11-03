@@ -14,7 +14,6 @@ import com.bitbox.chatting.repository.ChatRoomRepository;
 import com.bitbox.chatting.service.response.*;
 import io.github.bitbox.bitbox.dto.MemberCreditDto;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@Slf4j
 public class ChattingService {
     private final ChatRepository chatRepository;
     private final ChatRoomRepository chatRoomRepository;
